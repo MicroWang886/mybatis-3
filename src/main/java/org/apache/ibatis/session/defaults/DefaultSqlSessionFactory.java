@@ -44,6 +44,7 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
 
   @Override
   public SqlSession openSession() {
+    //这里获取的ExecutorType就是默认的simple类型的Executor。level指的是事务的隔离级别，autoCommit指的是是否自动提交
     return openSessionFromDataSource(configuration.getDefaultExecutorType(), null, false);
   }
 
@@ -90,10 +91,14 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
   private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) {
     Transaction tx = null;
     try {
+      //获得environment对象
       final Environment environment = configuration.getEnvironment();
+      //创建 Transaction对象
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
+      //创建executor对象
       final Executor executor = configuration.newExecutor(tx, execType);
+      //创建DefaultSqlSession对象
       return new DefaultSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
       closeTransaction(tx); // may have fetched a connection so lets call close()

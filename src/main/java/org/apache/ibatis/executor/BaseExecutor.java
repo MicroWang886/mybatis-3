@@ -131,7 +131,9 @@ public abstract class BaseExecutor implements Executor {
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+    //根据传入的参数动态获得SQL语句，最后返回BoundSql对象
     BoundSql boundSql = ms.getBoundSql(parameter);
+    //为本次查询创建缓存Key
     CacheKey key = createCacheKey(ms, parameter, rowBounds, boundSql);
     return query(ms, parameter, rowBounds, resultHandler, key, boundSql);
   }
@@ -149,10 +151,13 @@ public abstract class BaseExecutor implements Executor {
     List<E> list;
     try {
       queryStack++;
+      //从一级缓存中，获取查询结果
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
       if (list != null) {
+        //缓存中获取的结果不为空则将list处理后进行返回
         handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
       } else {
+        //如果缓存中获取为空那么就从数据库中获取数据
         list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
       }
     } finally {
@@ -320,12 +325,16 @@ public abstract class BaseExecutor implements Executor {
 
   private <E> List<E> queryFromDatabase(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     List<E> list;
+    //在缓存中， 添加站位对象，此处的站位符和延迟加载有关
     localCache.putObject(key, EXECUTION_PLACEHOLDER);
     try {
+      //执行读取操作
       list = doQuery(ms, parameter, rowBounds, resultHandler, boundSql);
     } finally {
+      //从缓存中移除对象
       localCache.removeObject(key);
     }
+    //添加到缓存中
     localCache.putObject(key, list);
     if (ms.getStatementType() == StatementType.CALLABLE) {
       localOutputParameterCache.putObject(key, parameter);

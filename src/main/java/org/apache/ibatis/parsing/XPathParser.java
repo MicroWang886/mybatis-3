@@ -46,10 +46,25 @@ import org.xml.sax.SAXParseException;
  */
 public class XPathParser {
 
+  /**
+   * XML Document 对象
+   */
   private final Document document;
+  /**
+   * 是否校验
+   */
   private boolean validation;
+  /**
+   * XML 实体解析器
+   */
   private EntityResolver entityResolver;
+  /**
+   * 变量 Properties 对象
+   */
   private Properties variables;
+  /**
+   * Java XPath 对象
+   */
   private XPath xpath;
 
   public XPathParser(String xml) {
@@ -142,6 +157,7 @@ public class XPathParser {
 
   public String evalString(Object root, String expression) {
     String result = (String) evaluate(expression, root, XPathConstants.STRING);
+    //基于 variables 替换动态值，如果 result 为动态值
     result = PropertyParser.parse(result, variables);
     return result;
   }
@@ -221,12 +237,16 @@ public class XPathParser {
 
   private Object evaluate(String expression, Object root, QName returnType) {
     try {
+      //依托xpath的evaluate获得指定元素或者节点对额值
       return xpath.evaluate(expression, root, returnType);
     } catch (Exception e) {
       throw new BuilderException("Error evaluating XPath.  Cause: " + e, e);
     }
   }
 
+  /**
+   * 基于java xml api生成对用的Document
+   **/
   private Document createDocument(InputSource inputSource) {
     // important: this must only be called AFTER common constructor
     try {
@@ -269,6 +289,7 @@ public class XPathParser {
     this.entityResolver = entityResolver;
     this.variables = variables;
     XPathFactory factory = XPathFactory.newInstance();
+    //创建一个xpath对象
     this.xpath = factory.newXPath();
   }
 
