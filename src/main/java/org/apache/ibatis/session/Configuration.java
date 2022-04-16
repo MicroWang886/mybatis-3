@@ -1,5 +1,5 @@
 /*
- *    Copyright 2009-2021 the original author or authors.
+ *    Copyright 2009-2022 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -669,15 +669,19 @@ public class Configuration {
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
     if (ExecutorType.BATCH == executorType) {
+      //创建批量执行的executor
       executor = new BatchExecutor(this, transaction);
     } else if (ExecutorType.REUSE == executorType) {
+      //创建重复使用的executor
       executor = new ReuseExecutor(this, transaction);
     } else {
+      //创建常规的executor
       executor = new SimpleExecutor(this, transaction);
     }
     if (cacheEnabled) {
       executor = new CachingExecutor(executor);
     }
+    //植入插件
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }
